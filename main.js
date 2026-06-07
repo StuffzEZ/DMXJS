@@ -1,14 +1,23 @@
-/**
- * DMXJS - A DMX Console-Style Light Card for Home Assistant
- * Version: 1.0.0
- * Supports HA 2026+
+/*
+ * .----------------.  .----------------.  .----------------.  .----------------.  .----------------.
+ * | .--------------. || .--------------. || .--------------. || .--------------. || .--------------. |
+ * | |  ________    | || | ____    ____ | || |  ____  ____  | || |     _____    | || |    _______   | |
+ * | | |_   ___ `.  | || ||_   \  /   _|| || | |_  _||_  _| | || |    |_   _|   | || |   /  ___  |  | |
+ * | |   | |   `. \ | || |  |   \/   |  | || |   \ \  / /   | || |      | |     | || |  |  (__ \_|  | |
+ * | |   | |    | | | || |  | |\  /| |  | || |    > `' <    | || |   _  | |     | || |   '.___`-.   | |
+ * | |  _| |___.' / | || | _| |_\/_| |_ | || |  _/ /'`\ \_  | || |  | |_' |     | || |  |`\____) |  | |
+ * | | |________.'  | || ||_____||_____|| || | |____||____| | || |  `.___.'     | || |  |_______.'  | |
+ * | |              | || |              | || |              | || |              | || |              | |
+ * | '--------------' || '--------------' || '--------------' || '--------------' || '--------------' |
+ *  '----------------'  '----------------'  '----------------'  '----------------'  '----------------'
  *
- * Licensed GNU GPLv3
+ * DMXJS - DMX Console-Style Light Cards for Home Assistant
+ * Version: 1.0.0  |  License: GPL-3.0  |  https://github.com/StuffzEZ/DMXJS
  *
  * Cards:
- *   dmx-channel-card   — single R, G, or B slider for a light
- *   dmx-rgb-card       — all three sliders for one RGB light
- *   dmx-group-card     — group + brightness slider controlling multiple lights
+ *   dmx-channel-card  — single R, G, or B slider for a light  (horizontal OR vertical)
+ *   dmx-rgb-card      — all three sliders for one RGB light    (horizontal OR vertical)
+ *   dmx-group-card    — group + brightness slider for multiple lights
  */
 
 /* ─────────────────────────────────────────────────────────────
@@ -71,6 +80,7 @@ const BASE_CSS = `
     flex-shrink: 0;
   }
 
+  /* ── HORIZONTAL SLIDER ── */
   .channel-label {
     font-size: 9px;
     letter-spacing: 0.12em;
@@ -85,16 +95,13 @@ const BASE_CSS = `
   .channel-value {
     font-size: 22px;
     font-weight: 700;
-    color: var(--channel-color, var(--dmx-accent));
     letter-spacing: -0.02em;
     line-height: 1;
     min-width: 44px;
     text-align: right;
-    text-shadow: 0 0 12px var(--channel-color, var(--dmx-accent));
     transition: color 0.15s;
   }
 
-  /* ── DMX SLIDER TRACK ── */
   .slider-wrap {
     position: relative;
     height: 56px;
@@ -118,15 +125,11 @@ const BASE_CSS = `
 
   .track-fill {
     height: 100%;
-    background: linear-gradient(90deg,
-      color-mix(in srgb, var(--channel-color, var(--dmx-accent)) 40%, #000) 0%,
-      var(--channel-color, var(--dmx-accent)) 100%);
     border-radius: 4px;
     transition: width 0.06s cubic-bezier(0.25,0.1,0.25,1);
     width: 0%;
   }
 
-  /* tick marks */
   .ticks {
     position: absolute;
     left: 0; right: 0;
@@ -142,7 +145,6 @@ const BASE_CSS = `
     overflow: visible;
   }
 
-  /* knob */
   .knob {
     position: absolute;
     top: 50%;
@@ -162,6 +164,7 @@ const BASE_CSS = `
     justify-content: center;
     gap: 3px;
     transition: left 0.06s cubic-bezier(0.25,0.1,0.25,1),
+                bottom 0.06s cubic-bezier(0.25,0.1,0.25,1),
                 box-shadow 0.1s;
     cursor: grab;
   }
@@ -185,12 +188,9 @@ const BASE_CSS = `
 
   .knob-line.center {
     width: 14px;
-    background: var(--channel-color, var(--dmx-accent));
-    box-shadow: 0 0 4px var(--channel-color, var(--dmx-accent));
     opacity: 1;
   }
 
-  /* tick labels */
   .tick-labels {
     display: flex;
     justify-content: space-between;
@@ -198,6 +198,132 @@ const BASE_CSS = `
     font-size: 8px;
     color: var(--dmx-text-muted);
     letter-spacing: 0.05em;
+  }
+
+  /* ── VERTICAL SLIDER ── */
+  .slider-outer-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .channel-value-v {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    text-align: center;
+    transition: color 0.15s;
+  }
+
+  .channel-label-v {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dmx-text-muted);
+    text-align: center;
+  }
+
+  .slider-wrap-v {
+    position: relative;
+    width: 56px;
+    cursor: pointer;
+    user-select: none;
+    touch-action: none;
+    flex-shrink: 0;
+  }
+
+  .track-bg-v {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8px;
+    background: var(--dmx-surface2);
+    border-radius: 4px;
+    border: 1px solid var(--dmx-border);
+    overflow: hidden;
+  }
+
+  .track-fill-v {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    border-radius: 4px;
+    transition: height 0.06s cubic-bezier(0.25,0.1,0.25,1);
+    height: 0%;
+  }
+
+  .ticks-v {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8px;
+    pointer-events: none;
+  }
+
+  .ticks-v svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .knob-v {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    width: 38px;
+    height: 24px;
+    background: var(--dmx-knob-bg);
+    border: 1.5px solid var(--dmx-border);
+    border-radius: 5px;
+    box-shadow:
+      0 2px 8px rgba(0,0,0,0.5),
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      inset 0 -1px 0 rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    transition: bottom 0.06s cubic-bezier(0.25,0.1,0.25,1),
+                box-shadow 0.1s;
+    cursor: grab;
+  }
+
+  .knob-v:active { cursor: grabbing; }
+
+  .knob-v.dragging {
+    box-shadow:
+      0 4px 16px rgba(0,0,0,0.6),
+      0 0 0 2px var(--channel-color, var(--dmx-accent)),
+      inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+
+  .knob-line-v {
+    height: 12px;
+    width: 2px;
+    background: var(--dmx-knob-line);
+    border-radius: 1px;
+    opacity: 0.85;
+  }
+
+  .knob-line-v.center {
+    height: 14px;
+    opacity: 1;
+  }
+
+  .tick-labels-v {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    font-size: 8px;
+    color: var(--dmx-text-muted);
+    letter-spacing: 0.05em;
+    padding: 0 0 0 2px;
   }
 
   /* ── EDITOR ── */
@@ -255,30 +381,26 @@ const BASE_CSS = `
    HELPER UTILITIES
 ───────────────────────────────────────────────────────────── */
 
-/** Parse current RGB from HA light entity */
 function getRGBFromState(stateObj) {
   if (!stateObj) return { r: 0, g: 0, b: 0 };
   const attr = stateObj.attributes || {};
-  // HA stores rgb_color as [r,g,b]
   if (attr.rgb_color) {
     return { r: attr.rgb_color[0], g: attr.rgb_color[1], b: attr.rgb_color[2] };
   }
   return { r: 0, g: 0, b: 0 };
 }
 
-/** Send an rgb_color service call to HA */
 function setRGB(hass, entityId, r, g, b) {
   r = Math.round(Math.max(0, Math.min(255, r)));
   g = Math.round(Math.max(0, Math.min(255, g)));
   b = Math.round(Math.max(0, Math.min(255, b)));
-
   if (r === 0 && g === 0 && b === 0) {
     hass.callService('light', 'turn_off', { entity_id: entityId });
   } else {
     hass.callService('light', 'turn_on', {
       entity_id: entityId,
       rgb_color: [r, g, b],
-      brightness: 255, // RGB mode: let rgb_color drive brightness
+      brightness: 255,
     });
   }
 }
@@ -286,17 +408,14 @@ function setRGB(hass, entityId, r, g, b) {
 const CHANNEL_COLORS = { r: '#ff3333', g: '#33ff66', b: '#3399ff' };
 const CHANNEL_NAMES  = { r: 'Red', g: 'Green', b: 'Blue' };
 
-/** Build SVG tick marks for the slider */
-function buildTicks(totalWidth, height) {
-  const minor = 5;   // every 5 units → 51 ticks (0,5,10...255)
-  const major = 51;  // every 51 units → 0,51,102,153,204,255
+/** Build SVG tick marks — works for both axes */
+function buildTicksH(totalWidth, height) {
   const STEPS = 255;
   let d = '';
   for (let i = 0; i <= STEPS; i++) {
+    if (i % 5 !== 0) continue;
     const x = (i / STEPS) * totalWidth;
-    const isMajor = (i % major === 0);
-    const isMinor = (i % minor === 0);
-    if (!isMinor && !isMajor) continue;
+    const isMajor = (i % 51 === 0);
     const tickH = isMajor ? height * 0.75 : height * 0.4;
     const y1 = (height - tickH) / 2;
     d += `M${x},${y1} L${x},${y1 + tickH} `;
@@ -304,27 +423,44 @@ function buildTicks(totalWidth, height) {
   return d;
 }
 
+function buildTicksV(totalHeight, width) {
+  const STEPS = 255;
+  let d = '';
+  for (let i = 0; i <= STEPS; i++) {
+    if (i % 5 !== 0) continue;
+    // i=0 is top (max visually); invert so 0 is at bottom
+    const y = ((STEPS - i) / STEPS) * totalHeight;
+    const isMajor = (i % 51 === 0);
+    const tickW = isMajor ? width * 0.75 : width * 0.4;
+    const x1 = (width - tickW) / 2;
+    d += `M${x1},${y} L${x1 + tickW},${y} `;
+  }
+  return d;
+}
+
 /* ─────────────────────────────────────────────────────────────
-   DMX SLIDER COMPONENT (reusable, not a custom element)
+   DMX SLIDER COMPONENT
+   opts: { label, color, value, onChange, orientation, height }
+   orientation: 'horizontal' (default) | 'vertical'
+   height: pixel height for vertical mode (default 200)
 ───────────────────────────────────────────────────────────── */
 class DmxSlider {
-  /**
-   * @param {object} opts
-   *   label, color, value (0-255), onChange(newVal)
-   */
   constructor(opts) {
-    this.label    = opts.label    || 'Channel';
-    this.color    = opts.color    || '#4af';
-    this.value    = opts.value    ?? 0;
-    this.onChange = opts.onChange || (() => {});
-    this._dragging = false;
-    this._raf = null;
+    this.label       = opts.label       || 'Channel';
+    this.color       = opts.color       || '#4af';
+    this.value       = opts.value       ?? 0;
+    this.onChange    = opts.onChange    || (() => {});
+    this.orientation = opts.orientation || 'horizontal';
+    this.vHeight     = opts.height      || 200;
+    this._dragging   = false;
+    this._raf        = null;
     this._pendingVal = null;
-    this.el = this._build();
+    this.el = this.orientation === 'vertical' ? this._buildV() : this._buildH();
     this._bindEvents();
   }
 
-  _build() {
+  /* ── HORIZONTAL BUILD ── */
+  _buildH() {
     const wrap = document.createElement('div');
     wrap.innerHTML = `
       <div class="channel-label">
@@ -335,9 +471,7 @@ class DmxSlider {
         <div class="track-bg">
           <div class="track-fill" style="background:linear-gradient(90deg,color-mix(in srgb,${this.color} 40%,#000),${this.color})"></div>
         </div>
-        <div class="ticks">
-          <svg preserveAspectRatio="none"></svg>
-        </div>
+        <div class="ticks"><svg preserveAspectRatio="none"></svg></div>
         <div class="knob">
           <div class="knob-line"></div>
           <div class="knob-line center" style="background:${this.color};box-shadow:0 0 4px ${this.color}"></div>
@@ -354,26 +488,68 @@ class DmxSlider {
     this._sliderEl = wrap.querySelector('.slider-wrap');
     this._svgEl    = wrap.querySelector('svg');
     this.el = wrap;
-
-    // Draw ticks once the element is sized — use ResizeObserver
-    this._ro = new ResizeObserver(() => this._drawTicks());
+    this._ro = new ResizeObserver(() => this._drawTicksH());
     this._ro.observe(this._sliderEl);
-
     this.setValue(this.value, false);
     return wrap;
   }
 
-  _drawTicks() {
+  _drawTicksH() {
     const w = this._sliderEl.clientWidth;
-    const h = 8; // track height
-    const path = buildTicks(w, h);
+    const h = 8;
+    const path = buildTicksH(w, h);
     this._svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
-    this._svgEl.innerHTML = `
-      <path d="${path}" stroke="#44444e" stroke-width="0.8" fill="none" opacity="0.7"/>
-    `;
+    this._svgEl.innerHTML = `<path d="${path}" stroke="#44444e" stroke-width="0.8" fill="none" opacity="0.7"/>`;
   }
 
+  /* ── VERTICAL BUILD ── */
+  _buildV() {
+    const wrap = document.createElement('div');
+    wrap.className = 'slider-outer-v';
+    wrap.innerHTML = `
+      <span class="channel-value-v" style="color:${this.color};text-shadow:0 0 12px ${this.color}">0</span>
+      <div style="display:flex;gap:4px;align-items:stretch;height:${this.vHeight}px">
+        <div class="slider-wrap-v" style="height:${this.vHeight}px" role="slider" aria-valuemin="0" aria-valuemax="255" aria-valuenow="0" tabindex="0">
+          <div class="track-bg-v">
+            <div class="track-fill-v" style="background:linear-gradient(0deg,color-mix(in srgb,${this.color} 40%,#000),${this.color})"></div>
+          </div>
+          <div class="ticks-v"><svg preserveAspectRatio="none"></svg></div>
+          <div class="knob-v">
+            <div class="knob-line-v"></div>
+            <div class="knob-line-v center" style="background:${this.color};box-shadow:0 0 4px ${this.color}"></div>
+            <div class="knob-line-v"></div>
+          </div>
+        </div>
+        <div class="tick-labels-v">
+          <span>255</span><span>192</span><span>128</span><span>64</span><span>0</span>
+        </div>
+      </div>
+      <span class="channel-label-v">${this.label}</span>
+    `;
+    this._valueEl  = wrap.querySelector('.channel-value-v');
+    this._trackEl  = wrap.querySelector('.track-fill-v');
+    this._knobEl   = wrap.querySelector('.knob-v');
+    this._sliderEl = wrap.querySelector('.slider-wrap-v');
+    this._svgEl    = wrap.querySelector('svg');
+    this.el = wrap;
+    this._ro = new ResizeObserver(() => this._drawTicksV());
+    this._ro.observe(this._sliderEl);
+    this.setValue(this.value, false);
+    return wrap;
+  }
+
+  _drawTicksV() {
+    const h = this._sliderEl.clientHeight;
+    const w = 8;
+    const path = buildTicksV(h, w);
+    this._svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    this._svgEl.innerHTML = `<path d="${path}" stroke="#44444e" stroke-width="0.8" fill="none" opacity="0.7"/>`;
+  }
+
+  /* ── EVENTS ── */
   _bindEvents() {
+    const isV = this.orientation === 'vertical';
+
     const onDown = (e) => {
       e.preventDefault();
       this._dragging = true;
@@ -402,11 +578,15 @@ class DmxSlider {
     window.addEventListener('mouseup', onUp);
     window.addEventListener('touchend', onUp);
 
-    // Keyboard
     this._sliderEl.addEventListener('keydown', (e) => {
       let delta = 0;
-      if (e.key === 'ArrowRight' || e.key === 'ArrowUp') delta = e.shiftKey ? 10 : 1;
-      if (e.key === 'ArrowLeft'  || e.key === 'ArrowDown') delta = e.shiftKey ? -10 : -1;
+      if (isV) {
+        if (e.key === 'ArrowUp')   delta = e.shiftKey ? 10 : 1;
+        if (e.key === 'ArrowDown') delta = e.shiftKey ? -10 : -1;
+      } else {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowUp')  delta = e.shiftKey ? 10 : 1;
+        if (e.key === 'ArrowLeft'  || e.key === 'ArrowDown') delta = e.shiftKey ? -10 : -1;
+      }
       if (delta === 0) return;
       e.preventDefault();
       const newVal = Math.max(0, Math.min(255, this.value + delta));
@@ -416,28 +596,34 @@ class DmxSlider {
 
   _moveHandler(e) {
     const rect = this._sliderEl.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    let ratio;
+    if (this.orientation === 'vertical') {
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      // bottom = 0, top = 255
+      ratio = 1 - Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+    } else {
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    }
     const newVal = Math.round(ratio * 255);
-
-    // Update display immediately (smooth)
     cancelAnimationFrame(this._raf);
-    this._raf = requestAnimationFrame(() => {
-      this._updateDisplay(newVal);
-    });
-
+    this._raf = requestAnimationFrame(() => this._updateDisplay(newVal));
     this._pendingVal = newVal;
     this.value = newVal;
-    // Fire onChange during drag too (throttled by rAF effectively via HA debounce)
     this.onChange(newVal);
   }
 
   _updateDisplay(val) {
     const pct = (val / 255) * 100;
-    this._trackEl.style.width = pct + '%';
-    this._knobEl.style.left = `calc(${pct}% )`;
     this._valueEl.textContent = val;
     this._sliderEl.setAttribute('aria-valuenow', val);
+    if (this.orientation === 'vertical') {
+      this._trackEl.style.height = pct + '%';
+      this._knobEl.style.bottom  = `calc(${pct}%)`;
+    } else {
+      this._trackEl.style.width = pct + '%';
+      this._knobEl.style.left   = `calc(${pct}%)`;
+    }
   }
 
   setValue(val, fireChange = false) {
@@ -451,12 +637,12 @@ class DmxSlider {
     this.color = color;
     this._valueEl.style.color = color;
     this._valueEl.style.textShadow = `0 0 12px ${color}`;
-    this._trackEl.style.background = `linear-gradient(90deg,color-mix(in srgb,${color} 40%,#000),${color})`;
-    const cl = this._knobEl.querySelector('.knob-line.center');
-    if (cl) {
-      cl.style.background = color;
-      cl.style.boxShadow = `0 0 4px ${color}`;
-    }
+    const isV = this.orientation === 'vertical';
+    this._trackEl.style.background = isV
+      ? `linear-gradient(0deg,color-mix(in srgb,${color} 40%,#000),${color})`
+      : `linear-gradient(90deg,color-mix(in srgb,${color} 40%,#000),${color})`;
+    const cl = this._knobEl.querySelector(isV ? '.knob-line-v.center' : '.knob-line.center');
+    if (cl) { cl.style.background = color; cl.style.boxShadow = `0 0 4px ${color}`; }
   }
 
   destroy() {
@@ -467,11 +653,10 @@ class DmxSlider {
 /* ─────────────────────────────────────────────────────────────
    CARD 1: dmx-channel-card
    Single channel (R, G, or B) for one light entity
+   Config: entity, channel, color, name, orientation, slider_height
 ───────────────────────────────────────────────────────────── */
 class DmxChannelCard extends HTMLElement {
-  static get properties() {
-    return { hass: {}, config: {} };
-  }
+  static get properties() { return { hass: {}, config: {} }; }
 
   constructor() {
     super();
@@ -479,8 +664,7 @@ class DmxChannelCard extends HTMLElement {
     this._hass = null;
     this._config = {};
     this._slider = null;
-    this._unsub = null;
-    this._updating = false; // guard against feedback loops
+    this._updating = false;
   }
 
   setConfig(config) {
@@ -489,30 +673,29 @@ class DmxChannelCard extends HTMLElement {
       throw new Error('dmx-channel-card: channel must be r, g, or b');
     }
     this._config = {
-      entity:  config.entity,
-      channel: config.channel,
-      color:   config.color || CHANNEL_COLORS[config.channel],
-      name:    config.name  || null,
+      entity:       config.entity,
+      channel:      config.channel,
+      color:        config.color        || CHANNEL_COLORS[config.channel],
+      name:         config.name         || null,
+      orientation:  config.orientation  || 'horizontal',
+      slider_height: config.slider_height || 200,
     };
     this._render();
   }
 
   set hass(hass) {
     this._hass = hass;
-    if (!this._slider) return;
-    if (this._updating) return;
-    const stateObj = hass.states[this._config.entity];
-    const rgb = getRGBFromState(stateObj);
+    if (!this._slider || this._updating) return;
+    const rgb = getRGBFromState(hass.states[this._config.entity]);
     const val = rgb[this._config.channel];
-    if (val !== this._slider.value) {
-      this._slider.setValue(val, false);
-    }
+    if (val !== this._slider.value) this._slider.setValue(val, false);
   }
 
   _render() {
     const cfg = this._config;
     const color = cfg.color || CHANNEL_COLORS[cfg.channel];
     const label = CHANNEL_NAMES[cfg.channel] + ' (DMX)';
+    const isV   = cfg.orientation === 'vertical';
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -520,7 +703,7 @@ class DmxChannelCard extends HTMLElement {
         :host { --channel-color: ${color}; }
       </style>
       <ha-card>
-        <div class="card">
+        <div class="card" ${isV ? 'style="display:inline-flex;flex-direction:column;align-items:center;min-width:100px"' : ''}>
           <div class="card-title">
             <span class="dot"></span>
             <span>${cfg.name || label}</span>
@@ -535,14 +718,14 @@ class DmxChannelCard extends HTMLElement {
       label: CHANNEL_NAMES[cfg.channel],
       color,
       value: 0,
+      orientation: cfg.orientation,
+      height: cfg.slider_height,
       onChange: (val) => this._onSliderChange(val),
     });
     this.shadowRoot.getElementById('slider-mount').appendChild(this._slider.el);
 
-    // Sync current state
     if (this._hass) {
-      const stateObj = this._hass.states[cfg.entity];
-      const rgb = getRGBFromState(stateObj);
+      const rgb = getRGBFromState(this._hass.states[cfg.entity]);
       this._slider.setValue(rgb[cfg.channel], false);
     }
   }
@@ -550,21 +733,14 @@ class DmxChannelCard extends HTMLElement {
   _onSliderChange(val) {
     if (!this._hass) return;
     this._updating = true;
-    const stateObj = this._hass.states[this._config.entity];
-    const rgb = getRGBFromState(stateObj);
+    const rgb = getRGBFromState(this._hass.states[this._config.entity]);
     rgb[this._config.channel] = val;
     setRGB(this._hass, this._config.entity, rgb.r, rgb.g, rgb.b);
     setTimeout(() => { this._updating = false; }, 800);
   }
 
-  // ── Config UI (Lovelace editor)
-  static getConfigElement() {
-    return document.createElement('dmx-channel-card-editor');
-  }
-
-  static getStubConfig() {
-    return { entity: 'light.rgb_light', channel: 'r' };
-  }
+  static getConfigElement() { return document.createElement('dmx-channel-card-editor'); }
+  static getStubConfig() { return { entity: 'light.rgb_light', channel: 'r' }; }
 }
 
 /* Editor for dmx-channel-card */
@@ -576,15 +752,8 @@ class DmxChannelCardEditor extends HTMLElement {
     this._hass = null;
   }
 
-  setConfig(config) {
-    this._config = { ...config };
-    this._render();
-  }
-
-  set hass(hass) {
-    this._hass = hass;
-    this._render();
-  }
+  setConfig(config) { this._config = { ...config }; this._render(); }
+  set hass(hass) { this._hass = hass; this._render(); }
 
   _render() {
     const cfg = this._config;
@@ -605,6 +774,13 @@ class DmxChannelCardEditor extends HTMLElement {
           <option value="g" ${cfg.channel === 'g' ? 'selected' : ''}>Green</option>
           <option value="b" ${cfg.channel === 'b' ? 'selected' : ''}>Blue</option>
         </select>
+        <label>Orientation</label>
+        <select id="orientation">
+          <option value="horizontal" ${(cfg.orientation || 'horizontal') === 'horizontal' ? 'selected' : ''}>Horizontal</option>
+          <option value="vertical"   ${cfg.orientation === 'vertical' ? 'selected' : ''}>Vertical</option>
+        </select>
+        <label>Slider Height (vertical mode, px)</label>
+        <input type="text" id="slider_height" value="${cfg.slider_height || 200}" placeholder="200">
         <label>Card Name (optional)</label>
         <input type="text" id="name" value="${cfg.name || ''}" placeholder="Leave blank for default">
         <label>Slider Colour</label>
@@ -615,21 +791,24 @@ class DmxChannelCardEditor extends HTMLElement {
     const fire = () => {
       this._config = {
         ...this._config,
-        entity:  this.shadowRoot.getElementById('entity').value,
-        channel: this.shadowRoot.getElementById('channel').value,
-        name:    this.shadowRoot.getElementById('name').value || undefined,
-        color:   this.shadowRoot.getElementById('color').value,
+        entity:       this.shadowRoot.getElementById('entity').value,
+        channel:      this.shadowRoot.getElementById('channel').value,
+        orientation:  this.shadowRoot.getElementById('orientation').value,
+        slider_height: parseInt(this.shadowRoot.getElementById('slider_height').value) || 200,
+        name:         this.shadowRoot.getElementById('name').value || undefined,
+        color:        this.shadowRoot.getElementById('color').value,
       };
       this.dispatchEvent(new CustomEvent('config-changed', { detail: { config: this._config }, bubbles: true, composed: true }));
     };
 
     this.shadowRoot.getElementById('entity').addEventListener('change', fire);
     this.shadowRoot.getElementById('channel').addEventListener('change', () => {
-      // Auto-set color to channel default
       const ch = this.shadowRoot.getElementById('channel').value;
       this.shadowRoot.getElementById('color').value = CHANNEL_COLORS[ch];
       fire();
     });
+    this.shadowRoot.getElementById('orientation').addEventListener('change', fire);
+    this.shadowRoot.getElementById('slider_height').addEventListener('input', fire);
     this.shadowRoot.getElementById('name').addEventListener('input', fire);
     this.shadowRoot.getElementById('color').addEventListener('input', fire);
   }
@@ -638,6 +817,7 @@ class DmxChannelCardEditor extends HTMLElement {
 /* ─────────────────────────────────────────────────────────────
    CARD 2: dmx-rgb-card
    All three channels for one RGB light
+   Config: entity, name, orientation, slider_height, color_r/g/b
 ───────────────────────────────────────────────────────────── */
 class DmxRgbCard extends HTMLElement {
   constructor() {
@@ -652,11 +832,13 @@ class DmxRgbCard extends HTMLElement {
   setConfig(config) {
     if (!config.entity) throw new Error('dmx-rgb-card: entity is required');
     this._config = {
-      entity:   config.entity,
-      name:     config.name    || null,
-      color_r:  config.color_r || CHANNEL_COLORS.r,
-      color_g:  config.color_g || CHANNEL_COLORS.g,
-      color_b:  config.color_b || CHANNEL_COLORS.b,
+      entity:       config.entity,
+      name:         config.name         || null,
+      orientation:  config.orientation  || 'horizontal',
+      slider_height: config.slider_height || 200,
+      color_r:      config.color_r      || CHANNEL_COLORS.r,
+      color_g:      config.color_g      || CHANNEL_COLORS.g,
+      color_b:      config.color_b      || CHANNEL_COLORS.b,
     };
     this._render();
   }
@@ -664,8 +846,7 @@ class DmxRgbCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     if (this._updating) return;
-    const stateObj = hass.states[this._config.entity];
-    const rgb = getRGBFromState(stateObj);
+    const rgb = getRGBFromState(hass.states[this._config.entity]);
     for (const ch of ['r','g','b']) {
       if (this._sliders[ch] && this._sliders[ch].value !== rgb[ch]) {
         this._sliders[ch].setValue(rgb[ch], false);
@@ -675,6 +856,10 @@ class DmxRgbCard extends HTMLElement {
 
   _render() {
     const cfg = this._config;
+    const isV = cfg.orientation === 'vertical';
+    const gapStyle = isV
+      ? 'display:flex;flex-direction:row;gap:12px;align-items:flex-start'
+      : 'display:flex;flex-direction:column;gap:10px';
 
     this.shadowRoot.innerHTML = `
       <style>${BASE_CSS}</style>
@@ -685,11 +870,11 @@ class DmxRgbCard extends HTMLElement {
             <span>${cfg.name || 'RGB DMX'}</span>
             <span class="entity-name" style="margin-left:auto;font-size:9px;color:var(--dmx-text-muted)">${cfg.entity}</span>
           </div>
-          <div id="r-mount" style="--channel-color:${cfg.color_r}"></div>
-          <div style="height:10px"></div>
-          <div id="g-mount" style="--channel-color:${cfg.color_g}"></div>
-          <div style="height:10px"></div>
-          <div id="b-mount" style="--channel-color:${cfg.color_b}"></div>
+          <div id="sliders" style="${gapStyle}">
+            <div id="r-mount" style="--channel-color:${cfg.color_r}"></div>
+            <div id="g-mount" style="--channel-color:${cfg.color_g}"></div>
+            <div id="b-mount" style="--channel-color:${cfg.color_b}"></div>
+          </div>
         </div>
       </ha-card>
     `;
@@ -700,6 +885,8 @@ class DmxRgbCard extends HTMLElement {
         label: CHANNEL_NAMES[ch],
         color,
         value: 0,
+        orientation: cfg.orientation,
+        height: cfg.slider_height,
         onChange: (val) => this._onSliderChange(ch, val),
       });
       this._sliders[ch] = sl;
@@ -715,11 +902,7 @@ class DmxRgbCard extends HTMLElement {
   _onSliderChange(changedCh, val) {
     if (!this._hass) return;
     this._updating = true;
-    const rgb = {
-      r: this._sliders.r.value,
-      g: this._sliders.g.value,
-      b: this._sliders.b.value,
-    };
+    const rgb = { r: this._sliders.r.value, g: this._sliders.g.value, b: this._sliders.b.value };
     rgb[changedCh] = val;
     setRGB(this._hass, this._config.entity, rgb.r, rgb.g, rgb.b);
     setTimeout(() => { this._updating = false; }, 800);
@@ -753,6 +936,13 @@ class DmxRgbCardEditor extends HTMLElement {
         <select id="entity">
           ${entities.map(e => `<option value="${e}" ${e === cfg.entity ? 'selected' : ''}>${e}</option>`).join('')}
         </select>
+        <label>Orientation</label>
+        <select id="orientation">
+          <option value="horizontal" ${(cfg.orientation || 'horizontal') === 'horizontal' ? 'selected' : ''}>Horizontal</option>
+          <option value="vertical"   ${cfg.orientation === 'vertical' ? 'selected' : ''}>Vertical</option>
+        </select>
+        <label>Slider Height (vertical mode, px)</label>
+        <input type="text" id="slider_height" value="${cfg.slider_height || 200}" placeholder="200">
         <label>Card Name (optional)</label>
         <input type="text" id="name" value="${cfg.name || ''}" placeholder="RGB DMX">
         <label>Red Slider Colour</label>
@@ -766,24 +956,26 @@ class DmxRgbCardEditor extends HTMLElement {
 
     const fire = () => {
       this._config = {
-        entity:  this.shadowRoot.getElementById('entity').value,
-        name:    this.shadowRoot.getElementById('name').value || undefined,
-        color_r: this.shadowRoot.getElementById('color_r').value,
-        color_g: this.shadowRoot.getElementById('color_g').value,
-        color_b: this.shadowRoot.getElementById('color_b').value,
+        entity:       this.shadowRoot.getElementById('entity').value,
+        orientation:  this.shadowRoot.getElementById('orientation').value,
+        slider_height: parseInt(this.shadowRoot.getElementById('slider_height').value) || 200,
+        name:         this.shadowRoot.getElementById('name').value || undefined,
+        color_r:      this.shadowRoot.getElementById('color_r').value,
+        color_g:      this.shadowRoot.getElementById('color_g').value,
+        color_b:      this.shadowRoot.getElementById('color_b').value,
       };
       this.dispatchEvent(new CustomEvent('config-changed', { detail: { config: this._config }, bubbles: true, composed: true }));
     };
-    this.shadowRoot.querySelectorAll('select, input').forEach(el => el.addEventListener('input', fire));
-    this.shadowRoot.querySelectorAll('select, input').forEach(el => el.addEventListener('change', fire));
+    this.shadowRoot.querySelectorAll('select, input').forEach(el => {
+      el.addEventListener('input', fire);
+      el.addEventListener('change', fire);
+    });
   }
 }
 
 /* ─────────────────────────────────────────────────────────────
    CARD 3: dmx-group-card
    Group + Brightness slider — controls multiple lights at once.
-   Compatible with dmx-channel-card / dmx-rgb-card (listens to
-   same entities so those cards update reactively too).
 ───────────────────────────────────────────────────────────── */
 class DmxGroupCard extends HTMLElement {
   constructor() {
@@ -791,11 +983,10 @@ class DmxGroupCard extends HTMLElement {
     this.attachShadow({ mode: 'open' });
     this._hass = null;
     this._config = {};
-    this._sliders = {};      // keyed by entity id + channel
+    this._sliders = {};
     this._brightnessSlider = null;
     this._groupSlider = null;
     this._updating = false;
-    this._baseRGB = {};      // stores per-entity rgb when brightness was set
   }
 
   setConfig(config) {
@@ -803,12 +994,14 @@ class DmxGroupCard extends HTMLElement {
       throw new Error('dmx-group-card: entities[] is required');
     }
     this._config = {
-      entities: config.entities,
-      name:     config.name          || 'DMX Group',
-      color:    config.color         || '#4af',
-      color_r:  config.color_r       || CHANNEL_COLORS.r,
-      color_g:  config.color_g       || CHANNEL_COLORS.g,
-      color_b:  config.color_b       || CHANNEL_COLORS.b,
+      entities:     config.entities,
+      name:         config.name         || 'DMX Group',
+      color:        config.color        || '#4af',
+      color_r:      config.color_r      || CHANNEL_COLORS.r,
+      color_g:      config.color_g      || CHANNEL_COLORS.g,
+      color_b:      config.color_b      || CHANNEL_COLORS.b,
+      orientation:  config.orientation  || 'horizontal',
+      slider_height: config.slider_height || 200,
     };
     this._render();
   }
@@ -816,7 +1009,6 @@ class DmxGroupCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     if (this._updating) return;
-    // Update per-entity sliders
     for (const entry of this._config.entities) {
       const entityId = typeof entry === 'string' ? entry : entry.entity;
       const rgb = getRGBFromState(hass.states[entityId]);
@@ -831,8 +1023,11 @@ class DmxGroupCard extends HTMLElement {
 
   _render() {
     const cfg = this._config;
+    const isV = cfg.orientation === 'vertical';
+    const gapStyle = isV
+      ? 'display:flex;flex-direction:row;gap:12px;align-items:flex-start'
+      : 'display:flex;flex-direction:column;gap:8px';
 
-    // Build entity sections HTML
     let entityHtml = '';
     for (const entry of cfg.entities) {
       const entityId = typeof entry === 'string' ? entry : entry.entity;
@@ -843,11 +1038,11 @@ class DmxGroupCard extends HTMLElement {
             <span class="dot" style="background:linear-gradient(135deg,${cfg.color_r},${cfg.color_g},${cfg.color_b});box-shadow:none;width:5px;height:5px"></span>
             <span style="font-size:9px">${label}</span>
           </div>
-          <div id="mount-${this._safeId(entityId)}-r" style="--channel-color:${cfg.color_r}"></div>
-          <div style="height:8px"></div>
-          <div id="mount-${this._safeId(entityId)}-g" style="--channel-color:${cfg.color_g}"></div>
-          <div style="height:8px"></div>
-          <div id="mount-${this._safeId(entityId)}-b" style="--channel-color:${cfg.color_b}"></div>
+          <div style="${gapStyle}">
+            <div id="mount-${this._safeId(entityId)}-r" style="--channel-color:${cfg.color_r}"></div>
+            <div id="mount-${this._safeId(entityId)}-g" style="--channel-color:${cfg.color_g}"></div>
+            <div id="mount-${this._safeId(entityId)}-b" style="--channel-color:${cfg.color_b}"></div>
+          </div>
         </div>
         <div style="height:16px;border-bottom:1px solid var(--dmx-border);margin-bottom:16px"></div>
       `;
@@ -858,7 +1053,6 @@ class DmxGroupCard extends HTMLElement {
         ${BASE_CSS}
         :host { --channel-color: ${cfg.color}; }
         .divider { height:1px; background:var(--dmx-border); margin:14px 0; }
-        .entity-section { margin-bottom:0; }
         .group-section { margin-bottom:14px; }
       </style>
       <ha-card>
@@ -867,55 +1061,42 @@ class DmxGroupCard extends HTMLElement {
             <span class="dot"></span>
             <span>${cfg.name}</span>
           </div>
-
           <div class="group-section">
-            <div class="card-title" style="margin-bottom:4px;font-size:8px;color:var(--dmx-text-muted)">
-              <span>GROUP MASTER</span>
-            </div>
-            <div id="group-mount"></div>
+            <div class="card-title" style="margin-bottom:4px;font-size:8px">GROUP MASTER</div>
+            <div id="group-mount" style="${isV ? 'display:inline-block' : ''}"></div>
           </div>
-
           <div class="group-section">
-            <div class="card-title" style="margin-bottom:4px;font-size:8px;color:var(--dmx-text-muted)">
-              <span>BRIGHTNESS</span>
-            </div>
-            <div id="brightness-mount"></div>
+            <div class="card-title" style="margin-bottom:4px;font-size:8px">BRIGHTNESS</div>
+            <div id="brightness-mount" style="${isV ? 'display:inline-block' : ''}"></div>
           </div>
-
           <div class="divider"></div>
           ${entityHtml}
         </div>
       </ha-card>
     `;
 
-    // Group master slider — sets all entities to same R,G,B value (white balance)
     this._groupSlider = new DmxSlider({
-      label: 'Master',
-      color: cfg.color,
-      value: 255,
+      label: 'Master', color: cfg.color, value: 255,
+      orientation: cfg.orientation, height: cfg.slider_height,
       onChange: (val) => this._onGroupChange(val),
     });
     this.shadowRoot.getElementById('group-mount').appendChild(this._groupSlider.el);
 
-    // Brightness slider — scales all channels proportionally
     this._brightnessSlider = new DmxSlider({
-      label: 'Brightness',
-      color: '#ffd700',
-      value: 255,
+      label: 'Brightness', color: '#ffd700', value: 255,
+      orientation: cfg.orientation, height: cfg.slider_height,
       onChange: (val) => this._onBrightnessChange(val),
     });
     this.shadowRoot.getElementById('brightness-mount').appendChild(this._brightnessSlider.el);
 
-    // Per-entity RGB sliders
     this._sliders = {};
     for (const entry of cfg.entities) {
       const entityId = typeof entry === 'string' ? entry : entry.entity;
       const sid = this._safeId(entityId);
       for (const [ch, color] of [['r', cfg.color_r],['g', cfg.color_g],['b', cfg.color_b]]) {
         const sl = new DmxSlider({
-          label: CHANNEL_NAMES[ch],
-          color,
-          value: 0,
+          label: CHANNEL_NAMES[ch], color, value: 0,
+          orientation: cfg.orientation, height: cfg.slider_height,
           onChange: (val) => this._onEntityChannelChange(entityId, ch, val),
         });
         const key = entityId + ':' + ch;
@@ -925,7 +1106,6 @@ class DmxGroupCard extends HTMLElement {
       }
     }
 
-    // Sync from HA state
     if (this._hass) {
       for (const entry of cfg.entities) {
         const entityId = typeof entry === 'string' ? entry : entry.entity;
@@ -938,23 +1118,19 @@ class DmxGroupCard extends HTMLElement {
     }
   }
 
-  _safeId(entityId) {
-    return entityId.replace(/[^a-zA-Z0-9]/g, '_');
-  }
+  _safeId(entityId) { return entityId.replace(/[^a-zA-Z0-9]/g, '_'); }
 
   _onGroupChange(val) {
     if (!this._hass) return;
     this._updating = true;
     for (const entry of this._config.entities) {
       const entityId = typeof entry === 'string' ? entry : entry.entity;
-      // Set each channel slider to val
       for (const ch of ['r','g','b']) {
         const key = entityId + ':' + ch;
         if (this._sliders[key]) this._sliders[key].setValue(val, false);
       }
       setRGB(this._hass, entityId, val, val, val);
     }
-    // Reset brightness to 255 when group changes
     this._brightnessSlider.setValue(255, false);
     setTimeout(() => { this._updating = false; }, 800);
   }
@@ -965,16 +1141,16 @@ class DmxGroupCard extends HTMLElement {
     const scale = brightness / 255;
     for (const entry of this._config.entities) {
       const entityId = typeof entry === 'string' ? entry : entry.entity;
-      // Use current slider values as the base
       const base = {
         r: this._sliders[entityId + ':r']?.value ?? 255,
         g: this._sliders[entityId + ':g']?.value ?? 255,
         b: this._sliders[entityId + ':b']?.value ?? 255,
       };
-      const newR = Math.round(base.r * scale);
-      const newG = Math.round(base.g * scale);
-      const newB = Math.round(base.b * scale);
-      setRGB(this._hass, entityId, newR, newG, newB);
+      setRGB(this._hass, entityId,
+        Math.round(base.r * scale),
+        Math.round(base.g * scale),
+        Math.round(base.b * scale)
+      );
     }
     setTimeout(() => { this._updating = false; }, 800);
   }
@@ -993,12 +1169,8 @@ class DmxGroupCard extends HTMLElement {
   }
 
   static getConfigElement() { return document.createElement('dmx-group-card-editor'); }
-
   static getStubConfig() {
-    return {
-      name: 'DMX Group',
-      entities: ['light.rgb_light_1', 'light.rgb_light_2'],
-    };
+    return { name: 'DMX Group', entities: ['light.rgb_light_1', 'light.rgb_light_2'] };
   }
 }
 
@@ -1040,6 +1212,13 @@ class DmxGroupCardEditor extends HTMLElement {
       <div class="editor">
         <label>Group Name</label>
         <input type="text" id="name" value="${cfg.name || 'DMX Group'}">
+        <label>Orientation</label>
+        <select id="orientation">
+          <option value="horizontal" ${(cfg.orientation || 'horizontal') === 'horizontal' ? 'selected' : ''}>Horizontal</option>
+          <option value="vertical"   ${cfg.orientation === 'vertical' ? 'selected' : ''}>Vertical</option>
+        </select>
+        <label>Slider Height (vertical mode, px)</label>
+        <input type="text" id="slider_height" value="${cfg.slider_height || 200}" placeholder="200">
         <label>Master/Group Slider Colour</label>
         <input type="color" id="color" value="${cfg.color || '#44aaff'}">
         <label>Red Channel Colour</label>
@@ -1063,12 +1242,14 @@ class DmxGroupCardEditor extends HTMLElement {
       });
       this._config = {
         ...this._config,
-        name:     this.shadowRoot.getElementById('name').value,
-        color:    this.shadowRoot.getElementById('color').value,
-        color_r:  this.shadowRoot.getElementById('color_r').value,
-        color_g:  this.shadowRoot.getElementById('color_g').value,
-        color_b:  this.shadowRoot.getElementById('color_b').value,
-        entities: ents,
+        name:         this.shadowRoot.getElementById('name').value,
+        orientation:  this.shadowRoot.getElementById('orientation').value,
+        slider_height: parseInt(this.shadowRoot.getElementById('slider_height').value) || 200,
+        color:        this.shadowRoot.getElementById('color').value,
+        color_r:      this.shadowRoot.getElementById('color_r').value,
+        color_g:      this.shadowRoot.getElementById('color_g').value,
+        color_b:      this.shadowRoot.getElementById('color_b').value,
+        entities:     ents,
       };
       this.dispatchEvent(new CustomEvent('config-changed', { detail: { config: this._config }, bubbles: true, composed: true }));
     };
@@ -1096,7 +1277,7 @@ class DmxGroupCardEditor extends HTMLElement {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   REGISTER EVERYTHING
+   REGISTER
 ───────────────────────────────────────────────────────────── */
 customElements.define('dmx-channel-card',        DmxChannelCard);
 customElements.define('dmx-channel-card-editor', DmxChannelCardEditor);
@@ -1108,30 +1289,43 @@ customElements.define('dmx-group-card-editor',   DmxGroupCardEditor);
 window.customCards = window.customCards || [];
 window.customCards.push(
   {
-    type:        'dmx-channel-card',
-    name:        'DMX Channel Card',
-    description: 'Single R, G, or B DMX-style slider for a light entity',
-    preview:     true,
+    type: 'dmx-channel-card',
+    name: 'DMX Channel Card',
+    description: 'Single R, G, or B DMX-style slider for a light entity (horizontal or vertical)',
+    preview: true,
     documentationURL: 'https://github.com/StuffzEZ/DMXJS',
   },
   {
-    type:        'dmx-rgb-card',
-    name:        'DMX RGB Card',
-    description: 'Three-channel RGB DMX controller for one light entity',
-    preview:     true,
+    type: 'dmx-rgb-card',
+    name: 'DMX RGB Card',
+    description: 'Three-channel RGB DMX controller for one light entity (horizontal or vertical)',
+    preview: true,
     documentationURL: 'https://github.com/StuffzEZ/DMXJS',
   },
   {
-    type:        'dmx-group-card',
-    name:        'DMX Group Card',
-    description: 'Group + brightness control for multiple RGB lights',
-    preview:     true,
+    type: 'dmx-group-card',
+    name: 'DMX Group Card',
+    description: 'Group + brightness control for multiple RGB lights (horizontal or vertical)',
+    preview: true,
     documentationURL: 'https://github.com/StuffzEZ/DMXJS',
   }
 );
 
-console.info(
-  '%c DMX LIGHT CARD %c v1.0.0 ',
-  'background:#1a1a1f;color:#4af;font-weight:700;padding:2px 6px;border-radius:4px 0 0 4px;border:1px solid #3a3a44',
-  'background:#4af;color:#000;font-weight:700;padding:2px 6px;border-radius:0 4px 4px 0'
+console.log(
+  [
+    ' .----------------.  .----------------.  .----------------.  .----------------.  .----------------.',
+    '| .--------------. || .--------------. || .--------------. || .--------------. || .--------------. |',
+    '| |  ________    | || | ____    ____ | || |  ____  ____  | || |     _____    | || |    _______   | |',
+    '| | |_   ___ `.  | || ||_   \\  /   _|| || | |_  _||_  _| | || |    |_   _|   | || |   /  ___  |  | |',
+    '| |   | |   `. \\ | || |  |   \\/   |  | || |   \\ \\  / /   | || |      | |     | || |  |  (__ \\_|  | |',
+    '| |   | |    | | | || |  | |\\  /| |  | || |    > `\' <    | || |   _  | |     | || |   \'.___`-.   | |',
+    '| |  _| |___.\' / | || | _| |_\\/_| |_ | || |  _/ /\'`\\ \\_  | || |  | |_\' |     | || |  |`\\____) |  | |',
+    '| | |________.\\'  | || ||_____||_____|| || | |____||____| | || |  `.___.\\'     | || |  |_______.\\'  | |',
+    '| |              | || |              | || |              | || |              | || |              | |',
+    '| \'--------------\' || \'--------------\' || \'--------------\' || \'--------------\' || \'--------------\' |',
+    " '----------------'  '----------------'  '----------------'  '----------------'  '----------------'",
+    '',
+    '  DMXJS v1.0.0 — DMX Console Cards for Home Assistant',
+    '  https://github.com/StuffzEZ/DMXJS  |  GPL-3.0',
+  ].join('\n')
 );
