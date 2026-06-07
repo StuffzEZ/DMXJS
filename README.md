@@ -2,9 +2,9 @@
   <img src="logo.png" alt="DMX Lights Card Logo">
 </p>
 
-<p align="center">
+<h3 align="center">
   A JavaScript module bringing DMX console-style light sliders to Home Assistant.
-</p>
+</h3>
 
 ## Install
 To install DMXJS to your Home Assistant Instance, first click the button below.<br><br>
