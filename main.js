@@ -226,18 +226,23 @@ const BASE_CSS = `
   }
 
   .slider-wrap-v {
-    position: relative;
-    width: 56px;
-    cursor: pointer;
-    user-select: none;
-    touch-action: none;
-    flex-shrink: 0;
-  }
+     position: relative;
+     width: 56px;
+     padding-top: 12px;
+     padding-bottom: 12px;
+     box-sizing: border-box;
+   
+     cursor: pointer;
+     user-select: none;
+     touch-action: none;
+     flex-shrink: 0;
+   }
 
   .track-bg-v {
-    position: absolute;
-    top: 0; bottom: 0;
-    left: 50%;
+     position: absolute;
+     top: 12px;
+     bottom: 12px;
+     left: 50%;
     transform: translateX(-50%);
     width: 8px;
     background: var(--dmx-surface2);
@@ -271,27 +276,28 @@ const BASE_CSS = `
   }
 
   .knob-v {
-    position: absolute;
-    left: 50%;
-    transform: translate(-50%, 50%);
-    width: 38px;
-    height: 24px;
-    background: var(--dmx-knob-bg);
-    border: 1.5px solid var(--dmx-border);
-    border-radius: 5px;
-    box-shadow:
-      0 2px 8px rgba(0,0,0,0.5),
-      inset 0 1px 0 rgba(255,255,255,0.08),
-      inset 0 -1px 0 rgba(0,0,0,0.3);
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    transition: bottom 0.06s cubic-bezier(0.25,0.1,0.25,1),
-                box-shadow 0.1s;
-    cursor: grab;
-  }
+     position: absolute;
+     left: 50%;
+     transform: translateX(-50%);
+     width: 38px;
+     height: 24px;
+   
+     background: var(--dmx-knob-bg);
+     border: 1.5px solid var(--dmx-border);
+     border-radius: 5px;
+   
+     display: flex;
+     flex-direction: row;
+     align-items: center;
+     justify-content: center;
+     gap: 3px;
+   
+     cursor: grab;
+   
+     transition:
+       bottom 0.06s cubic-bezier(0.25,0.1,0.25,1),
+       box-shadow 0.1s;
+   }
 
   .knob-v:active { cursor: grabbing; }
 
@@ -598,9 +604,19 @@ class DmxSlider {
     const rect = this._sliderEl.getBoundingClientRect();
     let ratio;
     if (this.orientation === 'vertical') {
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      // bottom = 0, top = 255
-      ratio = 1 - Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+   
+     const KNOB_HEIGHT = 24;
+   
+     const y = Math.max(
+       0,
+       Math.min(
+         rect.height - KNOB_HEIGHT,
+         clientY - rect.top - KNOB_HEIGHT / 2
+       )
+     );
+   
+     ratio = 1 - (y / (rect.height - KNOB_HEIGHT));
     } else {
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
@@ -614,17 +630,22 @@ class DmxSlider {
   }
 
   _updateDisplay(val) {
-    const pct = (val / 255) * 100;
-    this._valueEl.textContent = val;
-    this._sliderEl.setAttribute('aria-valuenow', val);
-    if (this.orientation === 'vertical') {
-      this._trackEl.style.height = pct + '%';
-      this._knobEl.style.bottom  = `calc(${pct}%)`;
-    } else {
-      this._trackEl.style.width = pct + '%';
-      this._knobEl.style.left   = `calc(${pct}%)`;
-    }
-  }
+     const pct = val / 255;
+   
+     this._valueEl.textContent = val;
+     this._sliderEl.setAttribute('aria-valuenow', val);
+   
+     if (this.orientation === 'vertical') {
+       const KNOB_HEIGHT = 24;
+       const travel = this._sliderEl.clientHeight - KNOB_HEIGHT;
+   
+       this._trackEl.style.height = `${pct * 100}%`;
+       this._knobEl.style.bottom = `${pct * travel}px`;
+     } else {
+       this._trackEl.style.width = `${pct * 100}%`;
+       this._knobEl.style.left = `${pct * 100}%`;
+     }
+   }
 
   setValue(val, fireChange = false) {
     val = Math.round(Math.max(0, Math.min(255, val)));
